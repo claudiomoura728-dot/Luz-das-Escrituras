@@ -1,0 +1,28 @@
+{
+  "entities": {
+    "study": {
+      "title": "Study",
+      "description": "A Jewish-Messianic Bible study",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "simpleTitle": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "outline": { "type": "array", "items": { "type": "string" } },
+        "references": { "type": "array", "items": { "type": "string" } },
+        "content": { "type": "string" },
+        "authorId": { "type": "string" }
+      },
+      "required": ["id", "title", "content", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/studies/{studyId}": {
+      "schema": "study",
+      "description": "Collection of shared studies"
+    }
+  }
+}

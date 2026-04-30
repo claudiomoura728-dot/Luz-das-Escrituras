@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Studies collection
+    match /studies/{studyId} {
+      function isValidStudy(data) {
+        return data.id is string && data.id.size() <= 64 &&
+               data.title is string && data.title.size() <= 200 &&
+               data.content is string && data.content.size() <= 50000 &&
+               data.createdAt is string;
+      }
+
+      // Anyone can read a shared study if they have the ID
+      allow get: if isValidId(studyId);
+      
+      // Anyone can list studies (needed for the main feed if we migrate to DB completely)
+      // But for now, let's keep it to public read of individual docs
+      allow list: if true; 
+
+      // Creation of new studies
+      allow create: if isSignedIn() && isValidStudy(incoming()) && 
+                       incoming().authorId == request.auth.uid;
+
+      // Updates only by author
+      allow update: if isSignedIn() && 
+                       existing().authorId == request.auth.uid &&
+                       isValidStudy(incoming()) &&
+                       incoming().id == existing().id &&
+                       incoming().authorId == existing().authorId;
+    }
+  }
+}
